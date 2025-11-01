@@ -9,7 +9,6 @@
     "lint": "biome check src",
     "build": "tsc",
     "test": "vitest run",
-    "test:e2e": "vitest run -c vitest.config.browser.ts",
     "test:unit": "vitest run -c vitest.config.ts"
   },
   "dependencies": {
@@ -18,9 +17,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "latest",
-    "@vitest/browser": "4.0.6",
-    "@vitest/browser-playwright": "4.0.6",
-    "playwright": "1.56.1",
+    "@types/node": "latest",
     "typescript": "latest",
     "vitest": "latest"
   }

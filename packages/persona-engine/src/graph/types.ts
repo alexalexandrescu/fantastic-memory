@@ -1,5 +1,5 @@
 import type { MemoryEntry, Persona, Quest } from "persona-storage";
-import type { ModelManager } from "../ModelManager";
+import type { IModelManager } from "../IModelManager";
 import type { ChatResponse } from "../types";
 
 // Define the graph state interface
@@ -16,5 +16,5 @@ export interface GraphState {
   error?: Error;
   retryCount: number;
   maxRetries: number;
-  modelManager: ModelManager;
+  modelManager: IModelManager;
 }

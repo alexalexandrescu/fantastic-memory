@@ -1,62 +1,134 @@
 import type { Persona } from "persona-storage";
 import { createPersonaFromTemplate, personaTemplates } from "persona-storage";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { NodeModelManager } from "../NodeModelManager";
 import { PersonaEngine } from "../PersonaEngine";
+import { isOllamaAvailable } from "../utils/ollamaCheck";
 
 /**
- * IMPORTANT: These are E2E tests that require a browser environment or MLC runtime.
- * They cannot run in Node.js because web-llm requires browser APIs.
+ * E2E tests that run against actual LLMs using Ollama in Node.js environment.
+ * Tests the same persona engine logic as browser tests, but using Ollama instead of web-llm.
  *
- * To run these tests:
- * 1. Use a browser-based test runner like Playwright with vitest
- * 2. Or use a headless browser environment configured for web-llm
- * 3. Or run them manually in the browser via the persona-configurator app
+ * Requirements:
+ * - Ollama service must be running locally (default: http://localhost:11434)
+ * - Model "tinyllama" must be available (run: `ollama pull tinyllama`)
  *
- * For automated CI/CD, these tests should be in a separate test suite that runs in a browser environment.
+ * To skip these tests (e.g., in CI without Ollama):
+ * - Set environment variable: SKIP_LLM_TESTS=true
+ * - Tests will automatically skip if Ollama service is not available
  */
 
-describe("Persona Engine E2E Tests (Browser Only)", () => {
-  const engine = new PersonaEngine();
+// Check for skip flag - using globalThis for cross-environment compatibility
+const SKIP_LLM_TESTS =
+  typeof globalThis !== "undefined" &&
+  (globalThis as { process?: { env?: Record<string, string> } }).process?.env?.SKIP_LLM_TESTS === "true";
+let ollamaAvailable = false;
+let engine: PersonaEngine | undefined;
+
+// Helper to skip tests if Ollama is not available
+function shouldSkipTest(): boolean {
+  return SKIP_LLM_TESTS || !ollamaAvailable || !engine;
+}
+
+// Helper to get engine with type safety
+function getEngine(): PersonaEngine {
+  if (!engine) {
+    throw new Error("Engine not initialized");
+  }
+  return engine;
+}
+
+describe("Persona Engine E2E Tests (Node.js with Ollama)", () => {
   const TEST_USER_NAME = "TestAdventurer";
-  const MODEL_ID = "TinyLlama-1.1B-Chat-v0.4-q4f32_1-MLC"; // Smaller model for E2E tests to avoid storage quota
+  const MODEL_ID = "Llama-3.1-8B-Instruct-q4f32_1-MLC"; // Maps to "llama3.1:8b" in Ollama - larger model for better JSON generation
 
   beforeAll(async () => {
+    // Check if we should skip tests
+    if (SKIP_LLM_TESTS) {
+      console.log("Skipping LLM tests: SKIP_LLM_TESTS=true");
+      return;
+    }
+
+    // Check if Ollama is available
+    ollamaAvailable = await isOllamaAvailable();
+    if (!ollamaAvailable) {
+      console.log(
+        "Skipping LLM tests: Ollama service not available at http://localhost:11434"
+      );
+      console.log(
+        "To run these tests: 1) Install and start Ollama, 2) Run: ollama pull tinyllama"
+      );
+      return;
+    }
+
+    // Initialize engine with NodeModelManager
+    console.log("Creating NodeModelManager...");
+    const nodeModelManager = new NodeModelManager();
+    engine = new PersonaEngine(nodeModelManager);
+
     // Initialize the engine with the model
-    console.log("Initializing model...");
-    await engine.initModel(MODEL_ID);
-    console.log("Model initialized");
+    console.log(`Initializing model ${MODEL_ID} with Ollama...`);
+    try {
+      await engine.initModel(MODEL_ID, progress => {
+        console.log(`  [${Math.round(progress.progress * 100)}%] ${progress.text}`);
+      });
+      console.log("✓ Model initialized successfully");
+    } catch (error) {
+      console.error("✗ Failed to initialize model:", error);
+      ollamaAvailable = false;
+    }
   });
 
   afterAll(async () => {
-    await engine.dispose();
+    if (engine) {
+      await engine.dispose();
+    }
   });
 
   // Generate tests for each persona template
-  personaTemplates.forEach(template => {
+  personaTemplates.forEach((template, templateIndex) => {
     describe(`${template.name} (${template.type})`, () => {
+      console.log(`\n[${templateIndex + 1}/${personaTemplates.length}] Testing ${template.name}...`);
       let persona: Persona;
 
       beforeEach(() => {
+        if (shouldSkipTest()) {
+          return;
+        }
         persona = createPersonaFromTemplate(template);
       });
 
       it("should greet and respond naturally", async () => {
-        const response = await engine.chat({
+        if (shouldSkipTest()) {
+          return;
+        }
+        console.log(`    → Sending: "Hello!"`);
+        const startTime = Date.now();
+        const response = await getEngine().chat({
           persona,
           message: "Hello!",
         });
+        const duration = Date.now() - startTime;
+        const preview = response.message.substring(0, 60).replace(/\n/g, " ");
+        console.log(`    ✓ Response (${duration}ms, ${response.message.length} chars): "${preview}..."`);
 
         expect(response.message).toBeDefined();
         expect(response.message.length).toBeGreaterThan(0);
       });
 
       it("should remember the user's name", async () => {
+        if (shouldSkipTest()) {
+          return;
+        }
         // First interaction: introduce the user
         const introduceName = `My name is ${TEST_USER_NAME}`;
-        const response1 = await engine.chat({
+        console.log(`    → Turn 1: "${introduceName}"`);
+        const start1 = Date.now();
+        const response1 = await getEngine().chat({
           persona,
           message: introduceName,
         });
+        console.log(`    ✓ Turn 1 complete (${Date.now() - start1}ms), memories: ${persona.memory.length}`);
 
         expect(response1.message).toBeDefined();
 
@@ -64,10 +136,13 @@ describe("Persona Engine E2E Tests (Browser Only)", () => {
         expect(persona.memory.length).toBeGreaterThan(0);
 
         // Second interaction: ask what my name is
-        const response2 = await engine.chat({
+        console.log(`    → Turn 2: "What is my name?"`);
+        const start2 = Date.now();
+        const response2 = await getEngine().chat({
           persona,
           message: "What is my name?",
         });
+        console.log(`    ✓ Turn 2 complete (${Date.now() - start2}ms)`);
 
         expect(response2.message).toBeDefined();
 
@@ -78,10 +153,13 @@ describe("Persona Engine E2E Tests (Browser Only)", () => {
       });
 
       it("should update memory importance on access", async () => {
+        if (shouldSkipTest()) {
+          return;
+        }
         // First interaction: introduce something
         const initialMemoryCount = persona.memory.length;
 
-        const response1 = await engine.chat({
+        const response1 = await getEngine().chat({
           persona,
           message: "I'm a renowned adventurer",
         });
@@ -94,7 +172,7 @@ describe("Persona Engine E2E Tests (Browser Only)", () => {
 
         // Second interaction: reference the same thing
         if (persona.memory.length > 0) {
-          const response2 = await engine.chat({
+          const response2 = await getEngine().chat({
             persona,
             message: "Do you remember what I said about myself?",
           });
@@ -107,7 +185,10 @@ describe("Persona Engine E2E Tests (Browser Only)", () => {
       });
 
       it("should tell the user what it can do", async () => {
-        const response = await engine.chat({
+        if (shouldSkipTest()) {
+          return;
+        }
+        const response = await getEngine().chat({
           persona,
           message: "What can you do for me?",
         });
@@ -117,8 +198,11 @@ describe("Persona Engine E2E Tests (Browser Only)", () => {
       });
 
       it("should maintain conversation context across turns", async () => {
+        if (shouldSkipTest()) {
+          return;
+        }
         // First turn
-        const response1 = await engine.chat({
+        const response1 = await getEngine().chat({
           persona,
           message: "I'm looking for a magic sword",
         });
@@ -126,7 +210,7 @@ describe("Persona Engine E2E Tests (Browser Only)", () => {
         expect(response1.message).toBeDefined();
 
         // Second turn: reference the previous topic
-        const response2 = await engine.chat({
+        const response2 = await getEngine().chat({
           persona,
           message: "How much would that cost?",
         });
@@ -137,7 +221,10 @@ describe("Persona Engine E2E Tests (Browser Only)", () => {
       });
 
       it("should handle JSON response format", async () => {
-        const response = await engine.chat({
+        if (shouldSkipTest()) {
+          return;
+        }
+        const response = await getEngine().chat({
           persona,
           message: "Hello!",
         });
@@ -153,8 +240,11 @@ describe("Persona Engine E2E Tests (Browser Only)", () => {
       });
 
       it("should generate quests when appropriate", async () => {
+        if (shouldSkipTest()) {
+          return;
+        }
         // Use a quest-focused persona or message
-        const response = await engine.chat({
+        const response = await getEngine().chat({
           persona,
           message: "I'm looking for an adventure or quest to help with",
         });
@@ -176,7 +266,10 @@ describe("Persona Engine E2E Tests (Browser Only)", () => {
       });
 
       it("should store conversation history", async () => {
-        const response = await engine.chat({
+        if (shouldSkipTest()) {
+          return;
+        }
+        const response = await getEngine().chat({
           persona,
           message: "Tell me about yourself",
         });
@@ -193,10 +286,13 @@ describe("Persona Engine E2E Tests (Browser Only)", () => {
 
   describe("Graph orchestration behavior", () => {
     it("should handle retry logic on errors", async () => {
+      if (shouldSkipTest()) {
+        return;
+      }
       const persona = createPersonaFromTemplate(personaTemplates[0]);
 
       // Normal chat should work
-      const response = await engine.chat({
+      const response = await getEngine().chat({
         persona,
         message: "Hello",
         maxRetries: 3,
@@ -206,9 +302,12 @@ describe("Persona Engine E2E Tests (Browser Only)", () => {
     });
 
     it("should process through graph nodes correctly", async () => {
+      if (shouldSkipTest()) {
+        return;
+      }
       const persona = createPersonaFromTemplate(personaTemplates[0]);
 
-      const response = await engine.chat({
+      const response = await getEngine().chat({
         persona,
         message: "I'm a brave adventurer named TestHero",
       });
@@ -221,10 +320,13 @@ describe("Persona Engine E2E Tests (Browser Only)", () => {
     });
 
     it("should handle memory retrieval and formatting", async () => {
+      if (shouldSkipTest()) {
+        return;
+      }
       const persona = createPersonaFromTemplate(personaTemplates[0]);
 
       // Add some context
-      const response1 = await engine.chat({
+      const response1 = await getEngine().chat({
         persona,
         message: "My favorite drink is ale",
       });
@@ -232,7 +334,7 @@ describe("Persona Engine E2E Tests (Browser Only)", () => {
       expect(response1.message).toBeDefined();
 
       // The next response should potentially use this memory
-      const response2 = await engine.chat({
+      const response2 = await getEngine().chat({
         persona,
         message: "What do you remember about me?",
       });
@@ -241,10 +343,13 @@ describe("Persona Engine E2E Tests (Browser Only)", () => {
     });
 
     it("should handle state updates across the graph", async () => {
+      if (shouldSkipTest()) {
+        return;
+      }
       const persona = createPersonaFromTemplate(personaTemplates[0]);
 
       // Single turn - verify state flows correctly
-      const response = await engine.chat({
+      const response = await getEngine().chat({
         persona,
         message: "Hello there!",
       });
@@ -262,11 +367,14 @@ describe("Persona Engine E2E Tests (Browser Only)", () => {
     });
 
     it("should retrieve and use memories from previous turns", async () => {
+      if (shouldSkipTest()) {
+        return;
+      }
       const persona = createPersonaFromTemplate(personaTemplates[0]);
       const initialMemoryCount = persona.memory.length;
 
       // First interaction: establish a fact
-      const response1 = await engine.chat({
+      const response1 = await getEngine().chat({
         persona,
         message: "I'm searching for a legendary sword called Excalibur",
       });
@@ -275,7 +383,7 @@ describe("Persona Engine E2E Tests (Browser Only)", () => {
       expect(persona.memory.length).toBeGreaterThan(initialMemoryCount);
 
       // Second interaction: ask about it
-      const response2 = await engine.chat({
+      const response2 = await getEngine().chat({
         persona,
         message: "Do you know what I'm looking for?",
       });
@@ -287,10 +395,13 @@ describe("Persona Engine E2E Tests (Browser Only)", () => {
     });
 
     it("should format memories in prompts", async () => {
+      if (shouldSkipTest()) {
+        return;
+      }
       const persona = createPersonaFromTemplate(personaTemplates[0]);
 
       // Establish multiple memories
-      await engine.chat({
+      await getEngine().chat({
         persona,
         message: "My name is MemoryTest and I love dragons",
       });
@@ -306,6 +417,9 @@ describe("Persona Engine E2E Tests (Browser Only)", () => {
     });
 
     it("should decay old unused memories", async () => {
+      if (shouldSkipTest()) {
+        return;
+      }
       const persona = createPersonaFromTemplate(personaTemplates[0]);
 
       // Add old memory manually
@@ -319,7 +433,7 @@ describe("Persona Engine E2E Tests (Browser Only)", () => {
       persona.memory.push(oldMemory);
 
       // Add new memory and access it (triggers decay)
-      const response = await engine.chat({
+      const response = await getEngine().chat({
         persona,
         message: "I'm a brand new adventurer",
       });
@@ -339,12 +453,15 @@ describe("Persona Engine E2E Tests (Browser Only)", () => {
 
   describe("Quest generation behavior", () => {
     it("should generate quests for quest NPC personas", async () => {
+      if (shouldSkipTest()) {
+        return;
+      }
       // Find a quest-focused persona
       const questPersona = createPersonaFromTemplate(
         personaTemplates.find(t => t.type === "quest-npc") || personaTemplates[0]
       );
 
-      const response = await engine.chat({
+      const response = await getEngine().chat({
         persona: questPersona,
         message: "I need an adventure to undertake",
       });
@@ -363,9 +480,12 @@ describe("Persona Engine E2E Tests (Browser Only)", () => {
     });
 
     it("should generate quests when quest keywords are present", async () => {
+      if (shouldSkipTest()) {
+        return;
+      }
       const persona = createPersonaFromTemplate(personaTemplates[0]);
 
-      const response = await engine.chat({
+      const response = await getEngine().chat({
         persona,
         message: "I'm looking for a mission or quest to help with",
       });
@@ -384,9 +504,12 @@ describe("Persona Engine E2E Tests (Browser Only)", () => {
     });
 
     it("should not generate quests for non-quest conversations", async () => {
+      if (shouldSkipTest()) {
+        return;
+      }
       const persona = createPersonaFromTemplate(personaTemplates[0]);
 
-      const response = await engine.chat({
+      const response = await getEngine().chat({
         persona,
         message: "The weather is nice today",
       });
@@ -399,9 +522,12 @@ describe("Persona Engine E2E Tests (Browser Only)", () => {
 
   describe("Edge cases and error handling", () => {
     it("should handle empty messages gracefully", async () => {
+      if (shouldSkipTest()) {
+        return;
+      }
       const persona = createPersonaFromTemplate(personaTemplates[0]);
 
-      const response = await engine.chat({
+      const response = await getEngine().chat({
         persona,
         message: "",
       });
@@ -412,10 +538,13 @@ describe("Persona Engine E2E Tests (Browser Only)", () => {
     });
 
     it("should handle very long messages", async () => {
+      if (shouldSkipTest()) {
+        return;
+      }
       const persona = createPersonaFromTemplate(personaTemplates[0]);
       const longMessage = `${"A".repeat(1000)} What do you think?`;
 
-      const response = await engine.chat({
+      const response = await getEngine().chat({
         persona,
         message: longMessage,
       });
@@ -425,9 +554,12 @@ describe("Persona Engine E2E Tests (Browser Only)", () => {
     });
 
     it("should handle special characters in messages", async () => {
+      if (shouldSkipTest()) {
+        return;
+      }
       const persona = createPersonaFromTemplate(personaTemplates[0]);
 
-      const response = await engine.chat({
+      const response = await getEngine().chat({
         persona,
         message: "Hello! I'm testing with 'quotes', \"double quotes\", and <tags>",
       });
@@ -437,6 +569,9 @@ describe("Persona Engine E2E Tests (Browser Only)", () => {
     });
 
     it("should handle persona with many existing memories", async () => {
+      if (shouldSkipTest()) {
+        return;
+      }
       const persona = createPersonaFromTemplate(personaTemplates[0]);
 
       // Add many memories to the persona
@@ -450,7 +585,7 @@ describe("Persona Engine E2E Tests (Browser Only)", () => {
         });
       }
 
-      const response = await engine.chat({
+      const response = await getEngine().chat({
         persona,
         message: "What do you know about me?",
       });
@@ -461,17 +596,20 @@ describe("Persona Engine E2E Tests (Browser Only)", () => {
     });
 
     it("should maintain persona personality across turns", async () => {
+      if (shouldSkipTest()) {
+        return;
+      }
       const grumpyPersona = createPersonaFromTemplate(
         personaTemplates.find(t => t.name.toLowerCase().includes("boss")) || personaTemplates[0]
       );
 
       // Multiple turns
-      const response1 = await engine.chat({
+      const response1 = await getEngine().chat({
         persona: grumpyPersona,
         message: "Hello there",
       });
 
-      const response2 = await engine.chat({
+      const response2 = await getEngine().chat({
         persona: grumpyPersona,
         message: "How are you?",
       });

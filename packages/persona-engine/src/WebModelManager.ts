@@ -1,7 +1,12 @@
 import * as webllm from "@mlc-ai/web-llm";
+import type {
+  ChatCompletionChunk,
+  ChatCompletionMessageParam,
+  IModelManager,
+} from "./IModelManager";
 import type { InitProgressCallback, ModelConfig } from "./types";
 
-export class ModelManager {
+export class WebModelManager implements IModelManager {
   private engine: webllm.MLCEngineInterface | null = null;
   private currentModel: string | null = null;
   private isInitialized: boolean = false;
@@ -9,7 +14,10 @@ export class ModelManager {
   /**
    * Initialize the model engine with a specific model
    */
-  async init(modelConfig: ModelConfig, progressCallback?: InitProgressCallback): Promise<void> {
+  async init(
+    modelConfig: ModelConfig,
+    progressCallback?: InitProgressCallback
+  ): Promise<void> {
     // If already initialized with this model, skip
     if (this.isInitialized && this.currentModel === modelConfig.id) {
       return;
@@ -43,19 +51,19 @@ export class ModelManager {
    * Get chat completions using the current engine
    */
   async chat(
-    messages: Array<webllm.ChatCompletionMessageParam>,
+    messages: Array<ChatCompletionMessageParam>,
     options?: { temperature?: number; top_p?: number; max_tokens?: number }
-  ): Promise<AsyncIterable<webllm.ChatCompletionChunk>> {
+  ): Promise<AsyncIterable<ChatCompletionChunk>> {
     if (!this.engine || !this.isInitialized) {
       throw new Error("Model engine not initialized. Call init() first.");
     }
 
     const response = await this.engine.chat.completions.create({
-      messages,
+      messages: messages as Array<webllm.ChatCompletionMessageParam>,
       stream: true,
       ...options,
     });
-    return response as AsyncIterable<webllm.ChatCompletionChunk>;
+    return response as AsyncIterable<ChatCompletionChunk>;
   }
 
   /**
@@ -116,3 +124,4 @@ export class ModelManager {
     ];
   }
 }
+

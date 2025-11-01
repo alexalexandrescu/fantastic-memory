@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { createPersonaGraph } from "../graph/graph";
 import type { GraphState } from "../graph/types";
 import { MemorySystem } from "../MemorySystem";
-import type { ModelManager } from "../ModelManager";
+import type { IModelManager } from "../IModelManager";
 
 describe("Graph Orchestration Unit Tests", () => {
   describe("Graph Construction", () => {
@@ -42,7 +42,11 @@ describe("Graph Orchestration Unit Tests", () => {
             };
           })();
         },
-      } as unknown as ModelManager;
+        isReady: () => true,
+        getCurrentModel: () => null,
+        init: async () => {},
+        dispose: async () => {},
+      } as unknown as IModelManager;
 
       const state: GraphState = {
         persona,

@@ -1,15 +1,17 @@
 import type { Message, Persona } from "persona-storage";
 import { createPersonaGraph } from "./graph/graph";
 import { MemorySystem } from "./MemorySystem";
-import { ModelManager } from "./ModelManager";
+import type { IModelManager } from "./IModelManager";
+import { WebModelManager } from "./WebModelManager";
 import type { ChatOptions, ChatResponse } from "./types";
 
 export class PersonaEngine {
-  private modelManager: ModelManager;
+  private modelManager: IModelManager;
   private graph = createPersonaGraph();
 
-  constructor() {
-    this.modelManager = new ModelManager();
+  constructor(modelManager?: IModelManager) {
+    // Default to WebModelManager for backward compatibility in production
+    this.modelManager = modelManager ?? new WebModelManager();
   }
 
   /**
@@ -19,7 +21,7 @@ export class PersonaEngine {
     modelId: string,
     progressCallback?: (progress: { text: string; progress: number }) => void
   ): Promise<void> {
-    const models = ModelManager.getAvailableModels();
+    const models = WebModelManager.getAvailableModels();
     const modelConfig = models.find(m => m.id === modelId);
 
     if (!modelConfig) {

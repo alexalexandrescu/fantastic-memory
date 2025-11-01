@@ -1,5 +1,5 @@
 import { Menu, X } from "lucide-react";
-import { ModelManager } from "persona-engine";
+import { WebModelManager } from "persona-engine";
 import { migratePersonas } from "persona-storage";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -23,7 +23,7 @@ export function App() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activePanel, setActivePanel] = useState<"personas" | "chat" | "tweaking">("chat");
 
-  const availableModels = ModelManager.getAvailableModels();
+  const availableModels = WebModelManager.getAvailableModels();
 
   const handleModelSelect = async (modelId: string) => {
     setSelectedModel(modelId);

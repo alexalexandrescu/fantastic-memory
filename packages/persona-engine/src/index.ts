@@ -3,6 +3,8 @@
 export { MemorySystem } from "./MemorySystem";
 
 // Export classes
-export { ModelManager } from "./ModelManager";
+export { WebModelManager } from "./WebModelManager";
+export { NodeModelManager } from "./NodeModelManager";
 export { PersonaEngine } from "./PersonaEngine";
 export * from "./types";
+export * from "./IModelManager";
