@@ -11,6 +11,8 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@langchain/core": "latest",
+    "@langchain/langgraph": "latest",
     "@mlc-ai/web-llm": "latest",
     "persona-storage": "*"
   },

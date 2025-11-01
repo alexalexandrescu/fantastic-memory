@@ -10,6 +10,7 @@ export interface ModelConfig {
 export interface ChatResponse {
   message: string;
   narration?: string;
+  quests?: import("persona-storage").Quest[];
   usage?: {
     promptTokens: number;
     completionTokens: number;

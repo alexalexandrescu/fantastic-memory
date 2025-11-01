@@ -125,6 +125,49 @@ export class MemorySystem {
   }
 
   /**
+   * Update memory importance based on access patterns (decay/increase model)
+   * Memories that are accessed frequently and recently get boosted
+   * Memories that are not accessed decay over time
+   */
+  static updateImportanceFromAccess(persona: Persona, accessedMemoryIds: string[]): void {
+    const now = Date.now();
+
+    for (const memory of persona.memory) {
+      const wasAccessed = accessedMemoryIds.includes(memory.id);
+      const daysSinceLastAccess = (now - memory.lastAccessed.getTime()) / (1000 * 60 * 60 * 24);
+      const daysSinceCreation = (now - memory.createdAt.getTime()) / (1000 * 60 * 60 * 24);
+
+      let newImportance = memory.importance;
+
+      if (wasAccessed) {
+        // Boost recently accessed memories
+        // More recent access = bigger boost, up to +2 points
+        const accessBoost = Math.min(2, 1 / (daysSinceLastAccess + 0.1));
+        newImportance += accessBoost;
+      } else {
+        // Decay unused memories
+        // Older memories decay faster, but slower for high-importance memories
+        const decayRate = daysSinceLastAccess > 7 ? 0.5 : 0.1; // Faster decay after a week
+        const decay = decayRate * Math.min(daysSinceLastAccess / 30, 1); // Cap decay at 30 days
+        newImportance -= decay;
+
+        // Very old memories (older than 90 days) decay more aggressively
+        if (daysSinceCreation > 90 && daysSinceLastAccess > 30) {
+          newImportance -= 0.2;
+        }
+      }
+
+      // Clamp between 0 and 10
+      newImportance = Math.max(0, Math.min(10, newImportance));
+
+      // Only update if change is significant (> 0.1) to avoid noise
+      if (Math.abs(newImportance - memory.importance) > 0.1) {
+        memory.importance = newImportance;
+      }
+    }
+  }
+
+  /**
    * Delete a memory
    */
   static deleteMemory(persona: Persona, memoryId: string): void {
