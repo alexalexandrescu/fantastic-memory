@@ -1,11 +1,11 @@
 # Persona Engine
 
-Core NPC persona engine with web-llm integration for TTRPG personas, powered by LangGraph orchestration.
+Core NPC persona engine with web-llm integration for TTRPG personas, powered by a custom graph orchestration system.
 
 ## Features
 
 - ModelManager for handling web-llm model initialization and chat
-- PersonaEngine for orchestrating persona interactions with LangGraph
+- PersonaEngine for orchestrating persona interactions with a graph-based workflow
 - MemorySystem for retrieving and managing persona memories with importance decay/increase model
 - Support for multiple local LLM models
 - Quest generation based on conversation context
@@ -36,9 +36,9 @@ if (response.quests) {
 }
 ```
 
-## LangGraph Architecture
+## Graph Architecture
 
-The PersonaEngine uses LangGraph to orchestrate conversational flows through a stateful graph:
+The PersonaEngine uses a custom graph orchestration system to manage conversational flows through a stateful graph:
 
 1. **retrieve_memory** - Retrieves relevant memories based on query, updates access timestamps
 2. **format_prompt** - Builds system prompt with memories and formats user message
@@ -49,7 +49,7 @@ The PersonaEngine uses LangGraph to orchestrate conversational flows through a s
 7. **generate_quest** - Conditionally generates quests based on conversation context
 8. **handle_error** - Manages retry logic for LLM failures
 
-The graph handles retries, memory importance updates, and quest generation automatically. All state persists via the persona storage layer.
+The graph handles retries, memory importance updates, and quest generation automatically. All state persists via the persona storage layer. This implementation is fully browser-compatible and provides the same functionality as LangGraph without requiring Node.js-specific dependencies.
 
 ## Memory Importance Model
 

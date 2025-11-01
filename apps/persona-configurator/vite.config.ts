@@ -13,42 +13,8 @@ export default defineConfig({
   server: {
     port: 3000,
   },
-  build: {
-    rollupOptions: {
-      external: (id) => {
-        // Externalize Node.js-specific modules that aren't available in browser
-        if (id === "node:async_hooks" || id.startsWith("node:")) {
-          return true;
-        }
-        return false;
-      },
-      output: {
-        // Provide empty polyfills for Node.js modules
-        banner: `
-          // Polyfill for Node.js async_hooks
-          if (typeof window !== 'undefined') {
-            try {
-              // @ts-ignore
-              globalThis.AsyncLocalStorage = class AsyncLocalStorage {
-                constructor() {}
-                run(store, callback) { return callback(); }
-                getStore() { return undefined; }
-                disable() {}
-                enterWith() {}
-                exit() {}
-                static snapshot() { return 0; }
-              };
-            } catch (e) {}
-          }
-        `,
-      },
-    },
-    // Define replacements for Node.js modules
-    define: {
-      "node:async_hooks": "undefined",
-    },
-  },
+  // Simplified build config without Node.js polyfills (LangGraph removed)
   optimizeDeps: {
-    exclude: ["@langchain/langgraph", "@langchain/core"],
+    // No longer need to exclude LangGraph dependencies
   },
 });

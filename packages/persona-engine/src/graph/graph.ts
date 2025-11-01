@@ -1,4 +1,3 @@
-import { StateGraph } from "@langchain/langgraph";
 import { extractMemory } from "./nodes/extractMemory";
 import { formatPrompt } from "./nodes/formatPrompt";
 import { generateQuest } from "./nodes/generateQuest";
@@ -7,7 +6,7 @@ import { llmCall } from "./nodes/llmCall";
 import { retrieveMemory } from "./nodes/retrieveMemory";
 import { storeMemory } from "./nodes/storeMemory";
 import { updateImportance } from "./nodes/updateImportance";
-import { type GraphState, GraphStateAnnotation } from "./types";
+import type { GraphState } from "./types";
 
 /**
  * Conditional edge to determine if LLM call should retry on error
@@ -54,47 +53,123 @@ function shouldGenerateQuestConditional(state: GraphState): string {
 }
 
 /**
+ * Simple graph node type
+ */
+type GraphNode = (
+  state: GraphState
+) => GraphState | Partial<GraphState> | Promise<GraphState | Partial<GraphState>>;
+
+/**
+ * Simple graph with conditional edges and state management
+ */
+class SimpleGraph {
+  private nodes: Map<string, GraphNode> = new Map();
+  private edges: Map<string, string> = new Map();
+  private conditionalEdges: Map<
+    string,
+    { condition: (state: GraphState) => string; mapping: Record<string, string> }
+  > = new Map();
+
+  addNode(name: string, node: GraphNode): void {
+    this.nodes.set(name, node);
+  }
+
+  addEdge(from: string, to: string): void {
+    this.edges.set(from, to);
+  }
+
+  addConditionalEdges(
+    from: string,
+    condition: (state: GraphState) => string,
+    mapping: Record<string, string>
+  ): void {
+    this.conditionalEdges.set(from, { condition, mapping });
+  }
+
+  /**
+   * Execute the graph starting from a given node
+   */
+  async execute(startNode: string, initialState: GraphState): Promise<GraphState> {
+    let currentNode = startNode;
+    let state = initialState;
+    let maxIterations = 100; // Safety limit for graph execution
+
+    while (currentNode !== "__end__") {
+      if (maxIterations-- <= 0) {
+        throw new Error("Graph execution exceeded maximum iterations");
+      }
+
+      const node = this.nodes.get(currentNode);
+      if (!node) {
+        throw new Error(`Node ${currentNode} not found`);
+      }
+
+      // Execute node
+      const result = await node(state);
+      // Merge result into state
+      state = { ...state, ...result };
+
+      // Determine next node
+      const conditionalEdge = this.conditionalEdges.get(currentNode);
+      if (conditionalEdge) {
+        const nextKey = conditionalEdge.condition(state);
+        currentNode = conditionalEdge.mapping[nextKey] || "__end__";
+      } else {
+        currentNode = this.edges.get(currentNode) || "__end__";
+      }
+    }
+
+    return state;
+  }
+}
+
+/**
  * Create the persona chat graph
  */
 export function createPersonaGraph() {
-  const workflow = new StateGraph(GraphStateAnnotation);
+  const workflow = new SimpleGraph();
 
-  // Add nodes (using type assertions to work around strict LangGraph typing)
-  workflow.addNode("retrieve_memory", retrieveMemory as any);
-  workflow.addNode("format_prompt", formatPrompt as any);
-  workflow.addNode("llm_call", llmCall as any);
-  workflow.addNode("handle_error", handleError as any);
-  workflow.addNode("extract_memory", extractMemory as any);
-  workflow.addNode("update_importance", updateImportance as any);
-  workflow.addNode("store_memory", storeMemory as any);
-  workflow.addNode("generate_quest", generateQuest as any);
+  // Add nodes
+  workflow.addNode("retrieve_memory", retrieveMemory);
+  workflow.addNode("format_prompt", formatPrompt);
+  workflow.addNode("llm_call", llmCall);
+  workflow.addNode("handle_error", handleError);
+  workflow.addNode("extract_memory", extractMemory);
+  workflow.addNode("update_importance", updateImportance);
+  workflow.addNode("store_memory", storeMemory);
+  workflow.addNode("generate_quest", generateQuest);
 
-  // Define edges (using type assertions for LangGraph strict typing)
-  (workflow as any).addEdge("__start__", "retrieve_memory");
-  (workflow as any).addEdge("retrieve_memory", "format_prompt");
-  (workflow as any).addEdge("format_prompt", "llm_call");
+  // Define edges
+  // Note: __start__ is a special marker, not a real node
+  workflow.addEdge("retrieve_memory", "format_prompt");
+  workflow.addEdge("format_prompt", "llm_call");
 
   // Conditional edge from llm_call
-  (workflow as any).addConditionalEdges("llm_call", shouldRetry, {
+  workflow.addConditionalEdges("llm_call", shouldRetry, {
     retry: "handle_error",
     continue: "extract_memory",
     fail: "handle_error", // Will throw in handle_error
   });
 
   // Error handling retry loop
-  (workflow as any).addEdge("handle_error", "llm_call");
+  workflow.addEdge("handle_error", "llm_call");
 
   // Memory processing flow
-  (workflow as any).addEdge("extract_memory", "update_importance");
-  (workflow as any).addEdge("update_importance", "store_memory");
+  workflow.addEdge("extract_memory", "update_importance");
+  workflow.addEdge("update_importance", "store_memory");
 
   // Conditional quest generation
-  (workflow as any).addConditionalEdges("store_memory", shouldGenerateQuestConditional, {
+  workflow.addConditionalEdges("store_memory", shouldGenerateQuestConditional, {
     generate_quest: "generate_quest",
     end: "__end__",
   });
 
-  (workflow as any).addEdge("generate_quest", "__end__");
+  workflow.addEdge("generate_quest", "__end__");
 
-  return workflow.compile();
+  return {
+    invoke: async (initialState: GraphState) => {
+      // Start from retrieve_memory as the first real node in the graph
+      return await workflow.execute("retrieve_memory", initialState);
+    },
+  };
 }

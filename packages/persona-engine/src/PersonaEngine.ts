@@ -30,7 +30,7 @@ export class PersonaEngine {
   }
 
   /**
-   * Chat with a persona using LangGraph orchestration
+   * Chat with a persona using graph orchestration
    */
   async chat(options: ChatOptions): Promise<ChatResponse> {
     const { persona, message, context, maxRetries = 3 } = options;
@@ -57,7 +57,7 @@ export class PersonaEngine {
     };
 
     // Invoke graph
-    const finalState = await this.graph.invoke(initialState as any);
+    const finalState = await this.graph.invoke(initialState);
 
     if (!finalState.parsedResponse) {
       throw finalState.error || new Error("Failed to get response from model");
