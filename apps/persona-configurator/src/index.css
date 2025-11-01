@@ -10,25 +10,61 @@
   --card-foreground: hsl(0 0% 3.9%);
   --popover: hsl(0 0% 100%);
   --popover-foreground: hsl(0 0% 3.9%);
-  --primary: hsl(0 0% 9%);
+  --primary: hsl(262 83% 58%);
   --primary-foreground: hsl(0 0% 98%);
   --secondary: hsl(0 0% 96.1%);
   --secondary-foreground: hsl(0 0% 9%);
   --muted: hsl(0 0% 96.1%);
   --muted-foreground: hsl(0 0% 45.1%);
-  --accent: hsl(0 0% 96.1%);
-  --accent-foreground: hsl(0 0% 9%);
+  --accent: hsl(262 83% 96%);
+  --accent-foreground: hsl(262 83% 15%);
   --destructive: hsl(0 84.2% 60.2%);
   --destructive-foreground: hsl(0 0% 98%);
   --border: hsl(0 0% 89.8%);
   --input: hsl(0 0% 89.8%);
-  --ring: hsl(0 0% 3.9%);
+  --ring: hsl(262 83% 58%);
   --radius: 0.5rem;
   --chart-1: hsl(12 76% 61%);
   --chart-2: hsl(173 58% 39%);
   --chart-3: hsl(197 37% 24%);
   --chart-4: hsl(43 74% 66%);
   --chart-5: hsl(27 87% 67%);
+
+  /* Status colors */
+  --success: hsl(142 76% 36%);
+  --success-foreground: hsl(0 0% 98%);
+  --warning: hsl(38 92% 50%);
+  --warning-foreground: hsl(0 0% 9%);
+  --info: hsl(199 89% 48%);
+  --info-foreground: hsl(0 0% 98%);
+
+  /* Persona type colors */
+  --persona-barkeep: hsl(25 95% 53%);
+  --persona-shopkeep: hsl(199 89% 48%);
+  --persona-guard: hsl(0 84% 60%);
+  --persona-healer: hsl(142 76% 36%);
+  --persona-noble: hsl(262 83% 58%);
+  --persona-quest-giver: hsl(280 65% 60%);
+
+  /* Chat bubble colors */
+  --chat-user: hsl(199 89% 48%);
+  --chat-user-foreground: hsl(0 0% 98%);
+  --chat-assistant: hsl(262 83% 96%);
+  --chat-assistant-foreground: hsl(262 83% 15%);
+  --chat-narration: hsl(0 0% 96.1%);
+  --chat-narration-foreground: hsl(0 0% 45.1%);
+
+  /* Background variants */
+  --background-pattern: linear-gradient(
+    135deg,
+    hsl(262 83% 98%) 0%,
+    hsl(199 89% 98%) 100%
+  );
+  --header-gradient: linear-gradient(
+    135deg,
+    hsl(262 83% 58%) 0%,
+    hsl(199 89% 48%) 100%
+  );
 }
 
 .dark {
@@ -38,24 +74,60 @@
   --card-foreground: hsl(0 0% 98%);
   --popover: hsl(0 0% 3.9%);
   --popover-foreground: hsl(0 0% 98%);
-  --primary: hsl(0 0% 98%);
-  --primary-foreground: hsl(0 0% 9%);
+  --primary: hsl(262 83% 58%);
+  --primary-foreground: hsl(0 0% 98%);
   --secondary: hsl(0 0% 14.9%);
   --secondary-foreground: hsl(0 0% 98%);
   --muted: hsl(0 0% 14.9%);
   --muted-foreground: hsl(0 0% 63.9%);
-  --accent: hsl(0 0% 14.9%);
+  --accent: hsl(262 83% 20%);
   --accent-foreground: hsl(0 0% 98%);
   --destructive: hsl(0 62.8% 30.6%);
   --destructive-foreground: hsl(0 0% 98%);
   --border: hsl(0 0% 14.9%);
   --input: hsl(0 0% 14.9%);
-  --ring: hsl(0 0% 83.1%);
+  --ring: hsl(262 83% 58%);
   --chart-1: hsl(220 70% 50%);
   --chart-2: hsl(160 60% 45%);
   --chart-3: hsl(30 80% 55%);
   --chart-4: hsl(280 65% 60%);
   --chart-5: hsl(340 75% 55%);
+
+  /* Status colors */
+  --success: hsl(142 71% 45%);
+  --success-foreground: hsl(0 0% 98%);
+  --warning: hsl(38 92% 50%);
+  --warning-foreground: hsl(0 0% 98%);
+  --info: hsl(199 89% 58%);
+  --info-foreground: hsl(0 0% 98%);
+
+  /* Persona type colors */
+  --persona-barkeep: hsl(25 95% 60%);
+  --persona-shopkeep: hsl(199 89% 58%);
+  --persona-guard: hsl(0 84% 65%);
+  --persona-healer: hsl(142 71% 45%);
+  --persona-noble: hsl(262 83% 65%);
+  --persona-quest-giver: hsl(280 65% 65%);
+
+  /* Chat bubble colors */
+  --chat-user: hsl(199 89% 48%);
+  --chat-user-foreground: hsl(0 0% 98%);
+  --chat-assistant: hsl(262 83% 20%);
+  --chat-assistant-foreground: hsl(0 0% 98%);
+  --chat-narration: hsl(0 0% 14.9%);
+  --chat-narration-foreground: hsl(0 0% 63.9%);
+
+  /* Background variants */
+  --background-pattern: linear-gradient(
+    135deg,
+    hsl(262 83% 8%) 0%,
+    hsl(199 89% 8%) 100%
+  );
+  --header-gradient: linear-gradient(
+    135deg,
+    hsl(262 83% 58%) 0%,
+    hsl(199 89% 48%) 100%
+  );
 }
 
 @theme inline {
@@ -86,6 +158,24 @@
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-persona-barkeep: var(--persona-barkeep);
+  --color-persona-shopkeep: var(--persona-shopkeep);
+  --color-persona-guard: var(--persona-guard);
+  --color-persona-healer: var(--persona-healer);
+  --color-persona-noble: var(--persona-noble);
+  --color-persona-quest-giver: var(--persona-quest-giver);
+  --color-chat-user: var(--chat-user);
+  --color-chat-user-foreground: var(--chat-user-foreground);
+  --color-chat-assistant: var(--chat-assistant);
+  --color-chat-assistant-foreground: var(--chat-assistant-foreground);
+  --color-chat-narration: var(--chat-narration);
+  --color-chat-narration-foreground: var(--chat-narration-foreground);
 }
 
 @layer base {
@@ -98,5 +188,225 @@
     font-feature-settings:
       "rlig" 1,
       "calt" 1;
+  }
+}
+
+/* Custom animations */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slide-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-in-down {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes lift {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-2px);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+@keyframes pulse-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 currentColor;
+  }
+  50% {
+    box-shadow: 0 0 0 4px transparent;
+  }
+}
+
+@keyframes typing {
+  0%,
+  60%,
+  100% {
+    opacity: 0.3;
+  }
+  30% {
+    opacity: 1;
+  }
+}
+
+/* Utility classes */
+@layer utilities {
+  .animate-fade-in {
+    animation: fade-in 0.3s ease-out;
+  }
+
+  .animate-slide-in-up {
+    animation: slide-in-up 0.3s ease-out;
+  }
+
+  .animate-slide-in-down {
+    animation: slide-in-down 0.3s ease-out;
+  }
+
+  .animate-slide-in-left {
+    animation: slide-in-left 0.3s ease-out;
+  }
+
+  .animate-slide-in-right {
+    animation: slide-in-right 0.3s ease-out;
+  }
+
+  .animate-scale-in {
+    animation: scale-in 0.2s ease-out;
+  }
+
+  .animate-lift {
+    transition: transform 0.2s ease-out;
+  }
+
+  .animate-lift:hover {
+    animation: lift 0.2s ease-out forwards;
+  }
+
+  .animate-shimmer {
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.1),
+      transparent
+    );
+    background-size: 1000px 100%;
+    animation: shimmer 2s infinite;
+  }
+
+  .animate-pulse-glow {
+    animation: pulse-glow 2s ease-in-out infinite;
+  }
+
+  .animate-typing {
+    animation: typing 1.4s ease-in-out infinite;
+  }
+
+  .stagger-1 {
+    animation-delay: 0.05s;
+  }
+
+  .stagger-2 {
+    animation-delay: 0.1s;
+  }
+
+  .stagger-3 {
+    animation-delay: 0.15s;
+  }
+
+  .stagger-4 {
+    animation-delay: 0.2s;
+  }
+
+  .bg-header-gradient {
+    background: var(--header-gradient);
+  }
+
+  .bg-pattern {
+    background: var(--background-pattern);
+  }
+
+  /* Custom scrollbar */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--color-muted);
+    border-radius: 4px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: var(--color-muted-foreground);
+  }
+
+  /* Glass morphism effect */
+  .glass {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .dark .glass {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  /* Smooth transitions */
+  .transition-smooth {
+    transition:
+      all 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+      transform 0.2s ease-out;
   }
 }
