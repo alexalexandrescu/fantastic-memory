@@ -1,5 +1,5 @@
 import { Eraser, MessageSquare, Plus, Search, Trash2, UserPlus } from "lucide-react";
-import type { Persona } from "persona-storage";
+import type { Persona, PersonaType } from "persona-storage";
 import {
   addPersona,
   clearAllHistories,
@@ -8,41 +8,74 @@ import {
   getAllPersonas,
   personaTemplates,
 } from "persona-storage";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { toast } from "sonner";
 import { useAppStore } from "../stores/appStore";
+import { EmptyState } from "./EmptyState";
+import { LoadingSkeleton } from "./LoadingSkeleton";
+
+function getPersonaTypeColor(type: PersonaType): string {
+  const colorMap: Record<string, string> = {
+    barkeep: "var(--persona-barkeep)",
+    shopkeep: "var(--persona-shopkeep)",
+    "quest-npc": "var(--persona-quest-giver)",
+    "town-guard": "var(--persona-guard)",
+    "tavern-patron": "var(--persona-barkeep)",
+    blacksmith: "var(--persona-shopkeep)",
+    healer: "var(--persona-healer)",
+    "mysterious-stranger": "var(--persona-noble)",
+    "village-elder": "var(--persona-noble)",
+    "merchant-caravan": "var(--persona-shopkeep)",
+    "dungeon-boss": "var(--persona-guard)",
+    custom: "var(--primary)",
+  };
+  return colorMap[type] || "var(--primary)";
+}
 
 export function PersonaList() {
   const { currentPersona, setCurrentPersona } = useAppStore();
   const [personas, setPersonas] = useState<Persona[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [showTemplates, setShowTemplates] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     loadPersonas();
   }, []);
 
   const loadPersonas = async () => {
-    const loaded = await getAllPersonas();
-    setPersonas(loaded);
+    setIsLoading(true);
+    try {
+      const loaded = await getAllPersonas();
+      setPersonas(loaded);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSelectPersona = (persona: Persona) => {
     setCurrentPersona(persona);
   };
 
-  const handleDeletePersona = async (id: string) => {
-    if (confirm("Are you sure you want to delete this persona?")) {
-      await deletePersona(id);
-      if (currentPersona?.id === id) {
-        setCurrentPersona(null);
+  const handleDeletePersona = useCallback(
+    async (id: string, name: string) => {
+      if (confirm(`Are you sure you want to delete "${name}"?`)) {
+        await deletePersona(id);
+        if (currentPersona?.id === id) {
+          setCurrentPersona(null);
+        }
+        await loadPersonas();
+        toast.success(`Deleted ${name}`);
       }
-      await loadPersonas();
-    }
-  };
+    },
+    [currentPersona, setCurrentPersona]
+  );
 
   const handleCreateFromTemplate = async (template: (typeof personaTemplates)[0]) => {
     const newPersona = createPersonaFromTemplate(template);
@@ -52,28 +85,31 @@ export function PersonaList() {
     setShowTemplates(false);
   };
 
-  const handleClearAllHistories = async () => {
+  const handleClearAllHistories = useCallback(async () => {
     const totalMessages = personas.reduce((sum, p) => sum + p.conversationHistory.length, 0);
     if (totalMessages === 0) {
-      alert("No conversation histories to clear.");
+      toast.info("No conversation histories to clear.");
       return;
     }
 
     const confirmMessage = `This will permanently delete all conversation histories from ALL ${personas.length} persona(s). This action cannot be undone.\n\nTotal messages: ${totalMessages}\n\nAre you absolutely sure?`;
     if (confirm(confirmMessage)) {
       await clearAllHistories();
-      // Reload personas to update the UI
       await loadPersonas();
-      // Clear current persona if it had history
       if (currentPersona && currentPersona.conversationHistory.length > 0) {
         setCurrentPersona({ ...currentPersona, conversationHistory: [] });
       }
-      alert("All conversation histories have been cleared.");
+      toast.success("All conversation histories have been cleared.");
     }
-  };
+  }, [personas, currentPersona, setCurrentPersona]);
 
-  const filteredPersonas = personas.filter(p =>
-    p.name.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredPersonas = useMemo(
+    () =>
+      personas.filter(p =>
+        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.type.toLowerCase().includes(searchQuery.toLowerCase())
+      ),
+    [personas, searchQuery]
   );
 
   return (
