@@ -1,0 +1,7 @@
+{
+  "buildCommand": "cd apps/persona-configurator && bun run build",
+  "outputDirectory": "apps/persona-configurator/dist",
+  "framework": "vite",
+  "installCommand": "bun install",
+  "devCommand": "cd apps/persona-configurator && bun run dev"
+}

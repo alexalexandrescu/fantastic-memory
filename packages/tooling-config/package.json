@@ -1,4 +1,11 @@
 {
   "name": "tooling-config",
-  "description": "A package used by every other package."
+  "version": "0.0.1",
+  "description": "Shared configuration for Biome, TypeScript, and Tailwind",
+  "private": true,
+  "devDependencies": {
+    "@biomejs/biome": "latest",
+    "@types/node": "latest",
+    "typescript": "latest"
+  }
 }

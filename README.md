@@ -1,42 +1,91 @@
-# Turborepo starter with shell commands
+# TTRPG Persona Configurator
 
-This Turborepo starter is maintained by the Turborepo core team. This template is great for issue reproductions and exploring building task graphs without frameworks.
+A fully client-side LLM-based TTRPG NPC Persona Configurator built with web-llm, React, Turborepo, and Bun. Create, customize, and interact with AI-powered NPCs with customizable personalities, memory, and quest-giving capabilities.
 
-## Using this example
+## Features
 
-Run the following command:
+- **Tri-Pane Interface**: Manage personas, chat with NPCs, and tweak settings in one view
+- **AI-Powered NPCs**: Powered by @mlc-ai/web-llm running models locally in the browser
+- **Customizable Personas**: Adjust system prompts, user prompts, model parameters, and personality traits
+- **Persistent Memory**: Each NPC remembers past conversations and important facts
+- **Quest System**: NPCs can generate and track quests based on party size and level
+- **Multiple Templates**: Pre-built templates for Barkeep, Shopkeep, Guards, Healers, and more
+- **Export/Import**: Share personas or backup your configuration
+- **Fully Client-Side**: No server required, runs entirely in the browser
 
-```sh
-npx create-turbo@latest -e with-shell-commands
+## Tech Stack
+
+- **Runtime**: Bun
+- **Build**: Vite
+- **Framework**: React 18 + TypeScript
+- **LLM**: @mlc-ai/web-llm
+- **State**: Zustand
+- **Storage**: Dexie.js (IndexedDB)
+- **UI**: shadcn/ui + Tailwind CSS
+- **Linting**: Biome
+- **Testing**: Vitest + React Testing Library
+- **CI/CD**: GitHub Actions + Vercel
+
+## Getting Started
+
+### Prerequisites
+
+- [Bun](https://bun.sh) installed
+
+### Installation
+
+```bash
+bun install
 ```
 
-### For bug reproductions
+### Development
 
-Giving the Turborepo core team a minimal reproduction is the best way to create a tight feedback loop for a bug you'd like to report.
+```bash
+bun dev
+```
 
-Because most monorepos will rely on more tooling than Turborepo (frameworks, linters, formatters, etc.), it's often useful for us to have a reproduction that strips away all of this other tooling so we can focus _only_ on Turborepo's role in your repo. This example does exactly that, giving you a good starting point for creating a reproduction.
+This starts the development server for the main application.
 
-- Feel free to rename/delete packages for your reproduction so that you can be confident it most closely matches your use case.
-- If you need to use a different package manager to produce your bug, run `npx @turbo/workspaces convert` to switch package managers.
-- It's possible that your bug really **does** have to do with the interaction of Turborepo and other tooling within your repository. If you find that your bug does not reproduce in this minimal example and you're confident Turborepo is still at fault, feel free to bring that other tooling into your reproduction.
+### Build
 
-## What's inside?
+```bash
+bun build
+```
 
-This Turborepo includes the following packages:
+Builds all packages and applications.
 
-### Apps and Packages
+### Lint
 
-- `app-a`: A final package that depends on all other packages in the graph and has no dependents. This could resemble an application in your monorepo that consumes everything in your monorepo through its topological tree.
-- `app-b`: Another final package with many dependencies. No dependents, lots of dependencies.
-- `pkg-a`: A package that has all scripts in the root `package.json`.
-- `pkg-b`: A package with _almost_ all scripts in the root `package.json`.
-- `tooling-config`: A package to simulate a common configuration used for all of your repository. This could resemble a configuration for tools like TypeScript or ESLint that are installed into all of your packages.
+```bash
+bun lint
+```
 
-### Some scripts to try
+Runs linting on all packages.
 
-If you haven't yet, [install global `turbo`](https://turborepo.com/docs/installing#install-globally) to run tasks.
+### Test
 
-- `turbo build lint check-types`: Runs all tasks in the default graph.
-- `turbo build`: A basic command to build `app-a` and `app-b` in parallel.
-- `turbo build --filter=app-a`: Building only `app-a` and its dependencies.
-- `turbo lint`: A basic command for running lints in all packages in parallel.
+```bash
+bun test
+```
+
+Runs tests across all packages.
+
+## Monorepo Structure
+
+```
+apps/
+  └── persona-configurator/    # Main React application
+
+packages/
+  ├── persona-engine/          # Web-LLM integration and persona logic
+  ├── persona-storage/         # IndexedDB persistence layer
+  └── tooling-config/          # Shared Biome, TypeScript, Tailwind config
+```
+
+## Deployment
+
+This project is configured for deployment on Vercel with automatic CI/CD via GitHub Actions.
+
+## License
+
+MIT
