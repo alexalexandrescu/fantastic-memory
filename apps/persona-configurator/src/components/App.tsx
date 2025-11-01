@@ -18,13 +18,8 @@ import { ThemeToggle } from "./ThemeToggle";
 import { TweakingPanel } from "./TweakingPanel";
 
 export function App() {
-  const {
-    selectedModel,
-    setSelectedModel,
-    isModelLoading,
-    setIsModelLoading,
-    modelProgress,
-  } = useAppStore();
+  const { selectedModel, setSelectedModel, isModelLoading, setIsModelLoading, modelProgress } =
+    useAppStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activePanel, setActivePanel] = useState<"personas" | "chat" | "tweaking">("chat");
 
@@ -135,11 +130,7 @@ export function App() {
         <SheetContent side="left" className="w-80 p-0">
           <div className="p-4 border-b flex items-center justify-between">
             <h2 className="font-semibold">Navigation</h2>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setMobileMenuOpen(false)}
-            >
+            <Button variant="ghost" size="icon" onClick={() => setMobileMenuOpen(false)}>
               <X className="h-5 w-5" />
             </Button>
           </div>
