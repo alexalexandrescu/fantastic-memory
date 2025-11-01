@@ -1,24 +1,17 @@
-import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface LoadingSkeletonProps {
   count?: number;
   variant?: "card" | "list" | "message" | "text";
 }
 
-export function LoadingSkeleton({
-  count = 3,
-  variant = "card",
-}: LoadingSkeletonProps) {
+export function LoadingSkeleton({ count = 3, variant = "card" }: LoadingSkeletonProps) {
   if (variant === "card") {
     return (
       <div className="space-y-3">
         {Array.from({ length: count }).map((_, i) => (
-          <Card
-            key={i}
-            className="animate-fade-in"
-            style={{ animationDelay: `${i * 0.1}s` }}
-          >
+          <Card key={i} className="animate-fade-in" style={{ animationDelay: `${i * 0.1}s` }}>
             <CardContent className="p-4 space-y-2">
               <Skeleton className="h-4 w-3/4" />
               <Skeleton className="h-3 w-1/2" />
@@ -81,4 +74,3 @@ export function LoadingSkeleton({
     </div>
   );
 }
-

@@ -2,6 +2,7 @@ import { Copy, MessageSquare, Send } from "lucide-react";
 import { MemorySystem, PersonaEngine } from "persona-engine";
 import { addMessage, getPersona, updatePersona } from "persona-storage";
 import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";

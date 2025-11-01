@@ -9,13 +9,13 @@ import {
   personaTemplates,
 } from "persona-storage";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { toast } from "sonner";
 import { useAppStore } from "../stores/appStore";
 import { EmptyState } from "./EmptyState";
 import { LoadingSkeleton } from "./LoadingSkeleton";
@@ -105,37 +105,38 @@ export function PersonaList() {
 
   const filteredPersonas = useMemo(
     () =>
-      personas.filter(p =>
-        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.type.toLowerCase().includes(searchQuery.toLowerCase())
+      personas.filter(
+        p =>
+          p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          p.type.toLowerCase().includes(searchQuery.toLowerCase())
       ),
     [personas, searchQuery]
   );
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="p-4 border-b space-y-3">
-        <h2 className="text-xl font-bold flex items-center gap-2">
-          <MessageSquare className="h-5 w-5" />
+    <div className="flex flex-col h-full animate-fade-in">
+      <div className="p-4 border-b space-y-3 bg-card/50 backdrop-blur-sm">
+        <h2 className="text-xl font-bold flex items-center gap-2 animate-slide-in-left">
+          <MessageSquare className="h-5 w-5 text-primary" />
           Personas
         </h2>
-        <div className="relative">
+        <div className="relative animate-slide-in-down">
           <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search personas..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className="pl-8"
+            className="pl-8 transition-smooth"
           />
         </div>
         <Button
           onClick={() => setShowTemplates(!showTemplates)}
-          className="w-full"
+          className="w-full transition-smooth animate-scale-in"
           variant={showTemplates ? "secondary" : "default"}
         >
           {showTemplates ? (
             <>
-              <Plus className="h-4 w-4 mr-2 rotate-45" />
+              <Plus className="h-4 w-4 mr-2 rotate-45 transition-transform" />
               Cancel
             </>
           ) : (
@@ -147,72 +148,149 @@ export function PersonaList() {
         </Button>
       </div>
 
-      <ScrollArea className="flex-1 p-2">
-        {showTemplates && (
-          <div className="mb-4">
-            <h3 className="text-sm font-semibold mb-2 text-muted-foreground">Templates</h3>
-            <div className="space-y-2">
-              {personaTemplates.map(template => (
-                <Card
-                  key={template.name}
-                  className="cursor-pointer hover:bg-accent"
-                  onClick={() => handleCreateFromTemplate(template)}
-                >
-                  <CardContent className="p-3">
-                    <div className="text-sm font-medium">{template.name}</div>
-                    <div className="text-xs text-muted-foreground capitalize">
-                      {template.type.replace("-", " ")}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        )}
-
-        <div className="space-y-2">
-          {filteredPersonas.map(persona => (
-            <Card
-              key={persona.id}
-              className={`cursor-pointer transition-all hover:shadow-md hover:border-primary/50 ${
-                currentPersona?.id === persona.id ? "border-primary shadow-md bg-accent" : ""
-              }`}
-              onClick={() => handleSelectPersona(persona)}
-            >
-              <CardContent className="p-3">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium truncate">{persona.name}</div>
-                    <div className="text-xs text-muted-foreground capitalize">
-                      {persona.type.replace("-", " ")}
-                    </div>
-                    {persona.conversationHistory.length > 0 && (
-                      <div className="text-xs text-muted-foreground mt-1">
-                        {persona.conversationHistory.length} messages
-                      </div>
-                    )}
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={e => {
-                      e.stopPropagation();
-                      handleDeletePersona(persona.id);
-                    }}
-                    className="h-6 w-6 shrink-0 hover:text-destructive"
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
+      <ScrollArea className="flex-1 p-2 custom-scrollbar">
+        {isLoading ? (
+          <LoadingSkeleton variant="card" count={5} />
+        ) : (
+          <>
+            {showTemplates && (
+              <div className="mb-4 animate-fade-in">
+                <h3 className="text-sm font-semibold mb-2 text-muted-foreground">Templates</h3>
+                <div className="space-y-2">
+                  {personaTemplates.map((template, idx) => (
+                    <Card
+                      key={template.name}
+                      className="cursor-pointer animate-lift transition-smooth hover:shadow-md border-l-4"
+                      style={{
+                        borderLeftColor: getPersonaTypeColor(template.type),
+                        animationDelay: `${idx * 0.05}s`,
+                      }}
+                      onClick={() => handleCreateFromTemplate(template)}
+                    >
+                      <CardContent className="p-3">
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-8 w-8">
+                            <AvatarFallback
+                              className="text-xs"
+                              style={{
+                                backgroundColor: getPersonaTypeColor(template.type),
+                                color: "white",
+                              }}
+                            >
+                              {template.name.charAt(0)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-medium">{template.name}</div>
+                            <Badge
+                              variant="secondary"
+                              className="text-xs mt-1"
+                              style={{
+                                borderColor: getPersonaTypeColor(template.type),
+                                color: getPersonaTypeColor(template.type),
+                              }}
+                            >
+                              {template.type.replace("-", " ")}
+                            </Badge>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
                 </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+              </div>
+            )}
 
-        {filteredPersonas.length === 0 && !showTemplates && (
-          <div className="text-center text-muted-foreground p-4">
-            No personas found. Add one from templates!
-          </div>
+            {filteredPersonas.length > 0 ? (
+              <div className="space-y-2">
+                {filteredPersonas.map((persona, idx) => {
+                  const isSelected = currentPersona?.id === persona.id;
+                  const typeColor = getPersonaTypeColor(persona.type);
+
+                  return (
+                    <Card
+                      key={persona.id}
+                      className={`cursor-pointer transition-smooth animate-slide-in-up animate-lift ${
+                        isSelected
+                          ? "border-primary shadow-md bg-accent ring-2 ring-primary/20"
+                          : "hover:shadow-md hover:border-primary/50"
+                      }`}
+                      style={{
+                        animationDelay: `${idx * 0.05}s`,
+                        borderLeftColor: isSelected ? typeColor : "transparent",
+                        borderLeftWidth: "4px",
+                      }}
+                      onClick={() => handleSelectPersona(persona)}
+                    >
+                      <CardContent className="p-3">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex items-center gap-3 flex-1 min-w-0">
+                            <Avatar className="h-10 w-10 shrink-0">
+                              <AvatarFallback
+                                className="text-sm font-bold text-white"
+                                style={{ backgroundColor: typeColor }}
+                              >
+                                {persona.name.charAt(0).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                <div className="text-sm font-medium truncate">{persona.name}</div>
+                                {isSelected && (
+                                  <div className="h-2 w-2 rounded-full bg-primary animate-pulse-glow" />
+                                )}
+                              </div>
+                              <Badge
+                                variant="outline"
+                                className="text-xs mb-1"
+                                style={{
+                                  borderColor: typeColor,
+                                  color: typeColor,
+                                }}
+                              >
+                                {persona.type.replace("-", " ")}
+                              </Badge>
+                              {persona.conversationHistory.length > 0 && (
+                                <div className="text-xs text-muted-foreground mt-1">
+                                  {persona.conversationHistory.length} message
+                                  {persona.conversationHistory.length !== 1 ? "s" : ""}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={e => {
+                              e.stopPropagation();
+                              handleDeletePersona(persona.id, persona.name);
+                            }}
+                            className="h-8 w-8 shrink-0 hover:text-destructive transition-smooth"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            ) : (
+              !showTemplates && (
+                <EmptyState
+                  icon={MessageSquare}
+                  title="No personas found"
+                  description={
+                    searchQuery
+                      ? `No personas match "${searchQuery}". Try a different search term.`
+                      : "Get started by adding a persona from templates above!"
+                  }
+                  actionLabel={searchQuery ? undefined : "Show Templates"}
+                  onAction={searchQuery ? undefined : () => setShowTemplates(true)}
+                />
+              )
+            )}
+          </>
         )}
       </ScrollArea>
 
